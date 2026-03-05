@@ -413,7 +413,7 @@ async function uploadResume(e){
     fill.style.width='30%';lbl.textContent='Uploading to server...';
     const base64=ev.target.result.split(',')[1];
     try{
-      const res=await fetch('/.netlify/functions/resume',{
+      const res=await fetch('/resume.pdf',{
         method:'POST',
         headers:{'Content-Type':'application/json'},
         body:JSON.stringify({pdf:base64})
@@ -443,18 +443,18 @@ function setAdminStatus(msg,color){
 function showResumeBtn(){
   // Hero button
   const hb=document.getElementById('heroResume');
-  hb.href='/.netlify/functions/resume';
+  hb.href='/resume.pdf';
   hb.style.display='inline-flex';
 
   // Contact section button
   const wrap=document.getElementById('resumeDownloadWrap');
-  wrap.innerHTML='<a href="/.netlify/functions/resume" target="_blank" class="btn-primary" style="margin-top:1.2rem;display:inline-flex;">📄 Download My Resume</a>';
+  wrap.innerHTML='<a href="/resume.pdf" target="_blank" class="btn-primary" style="margin-top:1.2rem;display:inline-flex;">📄 Download My Resume</a>';
 }
 
 // On page load — check if resume exists on server
 window.addEventListener('DOMContentLoaded',async()=>{
   try{
-    const res=await fetch('/.netlify/functions/resume',{method:'HEAD'});
+    const res=await fetch('/resume.pdf',{method:'HEAD'});
     if(res.ok) showResumeBtn();
   } catch(_){}
 });
