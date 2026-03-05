@@ -1,53 +1,56 @@
 // netlify/functions/resume.js
-// Handles both uploading (POST) and downloading (GET) the resume PDF
-// Uses Netlify Blobs for permanent storage — no database needed
+const { getStore } = require('@netlify/blobs');
 
-import { getStore } from '@netlify/blobs';
-
-export default async (req, context) => {
+exports.handler = async function(event, context) {
   const store = getStore('resume-store');
 
-  // ── GET: serve the PDF to visitors ──
-  if (req.method === 'GET' || req.method === 'HEAD') {
+  // ── GET/HEAD: serve PDF to visitors ──
+  if (event.httpMethod === 'GET' || event.httpMethod === 'HEAD') {
     try {
       const blob = await store.get('resume.pdf', { type: 'arrayBuffer' });
       if (!blob) {
-        return new Response('No resume uploaded yet.', { status: 404 });
+        return { statusCode: 404, body: 'No resume uploaded yet.' };
       }
-      return new Response(req.method === 'HEAD' ? null : blob, {
-        status: 200,
+      const buffer = Buffer.from(blob);
+      return {
+        statusCode: 200,
         headers: {
           'Content-Type': 'application/pdf',
           'Content-Disposition': 'attachment; filename="Adwait_Raich_Resume.pdf"',
           'Cache-Control': 'no-cache',
         },
-      });
+        body: buffer.toString('base64'),
+        isBase64Encoded: true,
+      };
     } catch (err) {
-      return new Response('Error fetching resume: ' + err.message, { status: 500 });
+      return { statusCode: 500, body: 'Error: ' + err.message };
     }
   }
 
-  // ── POST: admin uploads the PDF ──
-  if (req.method === 'POST') {
+  // ── POST: admin uploads PDF ──
+  if (event.httpMethod === 'POST') {
     try {
-      const body = await req.json();
+      const body = JSON.parse(event.body);
       if (!body.pdf) {
-        return Response.json({ error: 'No PDF data provided.' }, { status: 400 });
+        return { statusCode: 400, body: JSON.stringify({ error: 'No PDF provided.' }) };
       }
-      // Decode base64 → binary
-      const binary = Uint8Array.from(atob(body.pdf), c => c.charCodeAt(0));
+      const binary = Buffer.from(body.pdf, 'base64');
       await store.set('resume.pdf', binary, {
         metadata: { uploadedAt: new Date().toISOString() },
       });
-      return Response.json({ success: true, message: 'Resume uploaded successfully.' });
+      return {
+        statusCode: 200,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ success: true }),
+      };
     } catch (err) {
-      return Response.json({ error: err.message }, { status: 500 });
+      return {
+        statusCode: 500,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ error: err.message }),
+      };
     }
   }
 
-  return new Response('Method not allowed', { status: 405 });
-};
-
-export const config = {
-  path: '/.netlify/functions/resume',
+  return { statusCode: 405, body: 'Method not allowed' };
 };

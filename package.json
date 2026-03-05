@@ -1,8 +1,7 @@
 {
   "name": "adwait-raich-portfolio",
   "version": "1.0.0",
-  "description": "Portfolio website for Adwait Raich — Robotics & AI Engineer",
-  "type": "module",
+  "description": "Portfolio website for Adwait Raich",
   "dependencies": {
     "@netlify/blobs": "^8.1.0"
   }
